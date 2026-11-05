@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محرر PDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+body{font-family:Arial;background:#f0f2f5;text-align:center;padding:15px}
+h1{color:#1a73e8}
+.box{background:white;padding:15px;border-radius:12px;max-width:800px;margin:auto}
+button{padding:12px 18px;margin:5px;border:none;border-radius:8px;background:#1a73e8;color:white;font-size:16px}
+button.green{background:#0f9d58}
+input{padding:10px;width:90%;margin:5px;border:1px solid #ddd;border-radius:8px}
+#viewer{position:relative;display:inline-block;margin-top:15px;border:1px solid #ccc}
+canvas{max-width:100%}
+.tool{position:absolute;background:white;border:1px dashed red;padding:5px;cursor:move}
+</style>
+</head>
+<body>
+<h1>📄 محرر PDF - بدل معلوماتك</h1>
+<div class="box">
+<input type="file" id="pdfInput" accept="application/pdf"><br>
+<p>1- طلع الـ PDF<br>2- دير غطي معلومة باش تخبي القديمة<br>3- دير زيد نص جديد وكتب الجديد</p>
+<button onclick="addCover()">⬜ غطي معلومة قديمة</button>
+<button onclick="addText()">✏️ زيد نص جديد</button>
+<button class="green" onclick="window.print()">⬇️ حفظ / تحميل</button>
+<br>
+<input type="text" id="newText" placeholder="كتب هنا النص الجديد">
+<br>
+<div id="viewer"><canvas id="pdfCanvas"></canvas><div id="overlay"></div></div>
+</div>
+<script>
+let pdfDoc=null;
+document.getElementById('pdfInput').addEventListener('change', async (e)=>{
+  let buf = await e.target.files[0].arrayBuffer();
+  pdfDoc = await pdfjsLib.getDocument({data: buf}).promise;
+  let page = await pdfDoc.getPage(1);
+  let viewport = page.getViewport({scale:1.5});
+  let canvas=document.getElementById('pdfCanvas');
+  canvas.width=viewport.width; canvas.height=viewport.height;
+  await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
+});
+function addCover(){
+  let div=document.createElement('div');
+  div.className='tool'; div.style.width='150px'; div.style.height='30px'; div.style.background='white'; div.style.top='100px'; div.style.left='100px';
+  div.innerText='غطيتها - حركيني'; div.contentEditable=true;
+  makeDraggable(div); document.getElementById('overlay').appendChild(div);
+}
+function addText(){
+  let txt=document.getElementById('newText').value || 'نص جديد';
+  let div=document.createElement('div');
+  div.className='tool'; div.style.top='150px'; div.style.left='100px'; div.style.fontSize='18px'; div.style.fontWeight='bold';
+  div.innerText=txt; div.contentEditable=true;
+  makeDraggable(div); document.getElementById('overlay').appendChild(div);
+}
+function makeDraggable(el){
+  el.ontouchmove=(e)=>{ let t=e.touches[0]; el.style.left=t.clientX-50+'px'; el.style.top=t.clientY-50+'px'; };
+  el.onmousedown=(e)=>{ let x=e.clientX-el.offsetLeft, y=e.clientY-el.offsetTop;
+    document.onmousemove=(ev)=>{ el.style.left=(ev.clientX-x)+'px'; el.style.top=(ev.clientY-y)+'px'; };
+    document.onmouseup=()=>document.onmousemove=null;
+  };
+}
+</script>
+</body>
+</html>
